@@ -40,15 +40,12 @@ def encrypt_message(message: str) -> str:
 
     for char in message:
         if char.isalpha():
-            # Determinar el conjunto de letras según si es mayúscula o minúscula
             alphabet = (
                 string.ascii_uppercase if char.isupper() else string.ascii_lowercase
             )
-            # Obtener el índice desplazado 3 posiciones a la derecha (usando % 26 para volver al inicio)
             new_index = (alphabet.index(char) + 3) % 26
             encrypted_chars.append(alphabet[new_index])
         else:
-            # Mantener espacios, números y signos de puntuación tal como están
             encrypted_chars.append(char)
 
     return "".join(encrypted_chars)
@@ -66,17 +63,13 @@ def decrypt_message(encrypted_message: str) -> str:
 
     for char in encrypted_message:
         if char.isalpha():
-            # Seleccionar el abecedario correspondiente según si es mayúscula o minúscula
             alphabet = (
                 string.ascii_uppercase if char.isupper() else string.ascii_lowercase
             )
-
-            # Restar 3 posiciones. El operador % 26 maneja automáticamente
-            # el regreso al final del abecedario si el índice resulta negativo.
+            
             new_index = (alphabet.index(char) - 3) % 26
             decrypted_chars.append(alphabet[new_index])
         else:
-            # Preservar espacios, números y caracteres especiales
             decrypted_chars.append(char)
 
     return "".join(decrypted_chars)
