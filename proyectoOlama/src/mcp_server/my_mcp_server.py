@@ -52,9 +52,10 @@ def encrypt_message(message: str) -> str:
 
 @mcp.tool()
 def decrypt_message(encrypted_message: str) -> str:
-    """Descifra una oración reemplazando cada letra por la tercera a su izquierda en el alfabeto.
+    """
+    Decrypts a sentence by replacing each letter with the third one to its left in the alphabet.
 
-    Ejemplo: 'Vrb cheud' -> 'Soy zebra'
+    Example: 'Vrb cheud' -> 'Soy zebra'
     """
     if not encrypted_message:
         return ""
