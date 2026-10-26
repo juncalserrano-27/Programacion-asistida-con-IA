@@ -12,7 +12,8 @@ flowchart TD
     end
 
     subgraph S["Carril 2 - Sistema"]
-        VAL["Validar usuario, equipo, horario y disponibilidad"]
+        BLK{"¿El usuario está bloqueado por<br/>acumular 3 inasistencias?"}
+        VAL["Validar equipo, horario y disponibilidad"]
         OK{"¿Solicitud válida?"}
         ERR["Rechazar solicitud e informar el motivo"]
         REG["Registrar reserva en estado PENDIENTE"]
@@ -35,19 +36,36 @@ flowchart TD
     subgraph F["Carril 5 - Usuario"]
         REC["Recibir la notificación"]
         DEC{"¿Reserva aprobada?"}
-        ESP["Presentarse en la hora de préstamo"]
+        QUI{"¿Desea cancelar la reserva?"}
+        PLAZO{"¿Faltan 24 horas o más<br/>para el inicio?"}
+        CAN["Cancelar la reserva<br/>y liberar la franja"]
+        NOCAN["No se permite cancelar:<br/>faltan menos de 24 horas"]
+        ASIS{"¿El usuario se presenta?"}
+        INAS["Sistema: registrar la inasistencia"]
+        TRES{"¿Acumula 3 inasistencias?"}
+        BLOQ["Bloquear al usuario 30 días"]
         ALT["Solicitar otra franja u otro equipo"]
         FIN(["Fin"])
     end
 
-    I --> LOG --> CON --> SEL --> HOR --> ENV --> VAL --> OK
+    I --> LOG --> CON --> SEL --> HOR --> ENV --> BLK
+    BLK -->|Sí| ERR
+    BLK -->|No| VAL --> OK
     OK -->|No| ERR --> FIN
     OK -->|Sí| REG --> NOTA --> REV --> POL
     POL -->|Sí| APR --> BLQ --> NOTR
     POL -->|No| RECH --> LIB --> NOTR
     NOTR --> REC --> DEC
-    DEC -->|Sí| ESP --> FIN
     DEC -->|No| ALT --> FIN
+    DEC -->|Sí| QUI
+    QUI -->|Sí| PLAZO
+    PLAZO -->|Sí| CAN --> FIN
+    PLAZO -->|No| NOCAN --> ASIS
+    QUI -->|No| ASIS
+    ASIS -->|Sí| FIN
+    ASIS -->|No| INAS --> TRES
+    TRES -->|Sí| BLOQ --> FIN
+    TRES -->|No| FIN
 
 
 DIAGRAMA 2 - CASOS DE USO
@@ -63,7 +81,7 @@ flowchart LR
     CU02(["CU-02 Consultar equipos disponibles"])
     CU03(["CU-03 Reservar equipo por una hora"])
     CU04(["CU-04 Consultar mis reservas"])
-    CU05(["CU-05 Cancelar reserva"])
+    CU05(["CU-05 Cancelar reserva (hasta 24 h antes)"])
     CU06(["CU-06 Aprobar reserva"])
     CU07(["CU-07 Rechazar reserva"])
     CU08(["CU-08 Registrar entrega de equipo"])
@@ -77,6 +95,8 @@ flowchart LR
     CU16(["CU-16 Enviar notificación"])
     CU17(["CU-17 Validar reglas de negocio"])
     CU18(["CU-18 Registrar motivo de rechazo"])
+    CU19(["CU-19 Registrar inasistencia del usuario"])
+    CU20(["CU-20 Bloquear usuario por inasistencias"])
 
     EST --> CU01
     EST --> CU02
@@ -97,6 +117,7 @@ flowchart LR
     ADM --> CU13
     ADM --> CU14
     ADM --> CU15
+    ADM --> CU19
     CU16 --> COR
 
     CU03 -.->|incluye| CU02
@@ -108,6 +129,8 @@ flowchart LR
     CU08 -.->|incluye| CU16
     CU09 -.->|incluye| CU17
     CU09 -.->|incluye| CU16
+    CU19 -.->|incluye| CU20
+    CU19 -.->|incluye| CU16
     CU05 -.->|extiende| CU04
     CU10 -.->|extiende| CU09
     CU14 -.->|extiende| CU11
@@ -137,10 +160,14 @@ classDiagram
         -matricula : String
         -carrera : String
         -cuatrimestre : Integer
+        -inasistencias : Integer
+        -bloqueadoHasta : Date
         +reservar(equipoId, fecha, franjaId) Reserva
         +cancelarReserva(reservaId) Boolean
         +consultarReservas() List~Reserva~
         +recibirNotificacion(notificacion) void
+        +registrarInasistencia() Boolean
+        +estaBloqueado(fecha) Boolean
     }
 
     class Administrador {
@@ -151,6 +178,7 @@ classDiagram
         +registrarPrestamo(reservaId, hora) void
         +registrarDevolucion(reservaId, hora) void
         +registrarIncidencia(equipoId, descripcion) Incidencia
+        +registrarInasistencia(reservaId) void
         +gestionarEquipo(equipo) void
         +gestionarHorarioTrabajo(horario) void
         +consultarHistorial(equipoId) List~Reserva~
@@ -221,6 +249,7 @@ classDiagram
         +registrarPrestamo(hora) void
         +registrarDevolucion(hora) void
         +cancelar() Boolean
+        +puedeCancelarse(fechaActual) Boolean
     }
 
     class Notificacion {
@@ -347,7 +376,8 @@ classDiagram
     HorarioTrabajo ..> DiaSemana
     Incidencia ..> GravedadIncidencia
 
-    note for Reserva "Duración estándar de 60 minutos. La hora de préstamo y la hora de devolución se registran al entregar y al recibir el equipo."
+    note for Reserva "Duración estándar de 60 minutos. Solo se puede cancelar hasta 24 horas antes del inicio. La hora de préstamo y la hora de devolución se registran al entregar y al recibir el equipo."
     note for FranjaHoraria "Cada franja dura exactamente 60 minutos y no se solapa con otra del mismo laboratorio."
     note for Administrador "Solo puede aprobar, entregar y recibir equipos dentro de su horario de trabajo."
     note for Equipo "Un equipo prestado, en mantenimiento o fuera de servicio no puede reservarse."
+    note for Usuario "Al acumular 3 inasistencias el usuario queda bloqueado 30 días y no puede crear reservas."
