@@ -1,0 +1,353 @@
+DIAGRAMA 1 - FLUJO DE SOLICITUD Y APROBACIÓN
+=====================================================================
+
+flowchart TD
+    subgraph U["Carril 1 - Usuario"]
+        I(["Inicio"])
+        LOG["Iniciar sesión"]
+        CON["Consultar equipos disponibles"]
+        SEL["Seleccionar equipo y fecha"]
+        HOR["Elegir franja de una hora"]
+        ENV["Enviar solicitud de reserva"]
+    end
+
+    subgraph S["Carril 2 - Sistema"]
+        VAL["Validar usuario, equipo, horario y disponibilidad"]
+        OK{"¿Solicitud válida?"}
+        ERR["Rechazar solicitud e informar el motivo"]
+        REG["Registrar reserva en estado PENDIENTE"]
+        NOTA["Notificar al administrador"]
+    end
+
+    subgraph A["Carril 3 - Administrador"]
+        REV["Revisar solicitudes pendientes"]
+        POL{"¿Cumple las políticas de uso?"}
+        APR["Aprobar reserva y registrar al administrador"]
+        RECH["Rechazar reserva con motivo"]
+    end
+
+    subgraph C["Carril 4 - Sistema"]
+        BLQ["Bloquear la franja del equipo"]
+        LIB["Liberar la franja del equipo"]
+        NOTR["Notificar la resolución al usuario"]
+    end
+
+    subgraph F["Carril 5 - Usuario"]
+        REC["Recibir la notificación"]
+        DEC{"¿Reserva aprobada?"}
+        ESP["Presentarse en la hora de préstamo"]
+        ALT["Solicitar otra franja u otro equipo"]
+        FIN(["Fin"])
+    end
+
+    I --> LOG --> CON --> SEL --> HOR --> ENV --> VAL --> OK
+    OK -->|No| ERR --> FIN
+    OK -->|Sí| REG --> NOTA --> REV --> POL
+    POL -->|Sí| APR --> BLQ --> NOTR
+    POL -->|No| RECH --> LIB --> NOTR
+    NOTR --> REC --> DEC
+    DEC -->|Sí| ESP --> FIN
+    DEC -->|No| ALT --> FIN
+
+
+DIAGRAMA 2 - CASOS DE USO
+=====================================================================
+
+flowchart LR
+    EST["Estudiante"]
+    DOC["Docente"]
+    ADM["Administrador"]
+    COR["Servicio de correo"]
+
+    CU01(["CU-01 Iniciar sesión"])
+    CU02(["CU-02 Consultar equipos disponibles"])
+    CU03(["CU-03 Reservar equipo por una hora"])
+    CU04(["CU-04 Consultar mis reservas"])
+    CU05(["CU-05 Cancelar reserva"])
+    CU06(["CU-06 Aprobar reserva"])
+    CU07(["CU-07 Rechazar reserva"])
+    CU08(["CU-08 Registrar entrega de equipo"])
+    CU09(["CU-09 Registrar devolución de equipo"])
+    CU10(["CU-10 Registrar incidencia del equipo"])
+    CU11(["CU-11 Gestionar equipos"])
+    CU12(["CU-12 Gestionar laboratorios y horarios"])
+    CU13(["CU-13 Gestionar horario de trabajo"])
+    CU14(["CU-14 Registrar mantenimiento"])
+    CU15(["CU-15 Consultar reportes e historial"])
+    CU16(["CU-16 Enviar notificación"])
+    CU17(["CU-17 Validar reglas de negocio"])
+    CU18(["CU-18 Registrar motivo de rechazo"])
+
+    EST --> CU01
+    EST --> CU02
+    EST --> CU03
+    EST --> CU04
+    EST --> CU05
+    DOC --> CU01
+    DOC --> CU02
+    DOC --> CU03
+    DOC --> CU04
+    DOC --> CU05
+    ADM --> CU06
+    ADM --> CU07
+    ADM --> CU08
+    ADM --> CU09
+    ADM --> CU11
+    ADM --> CU12
+    ADM --> CU13
+    ADM --> CU14
+    ADM --> CU15
+    CU16 --> COR
+
+    CU03 -.->|incluye| CU02
+    CU03 -.->|incluye| CU17
+    CU03 -.->|incluye| CU16
+    CU06 -.->|incluye| CU16
+    CU07 -.->|incluye| CU18
+    CU07 -.->|incluye| CU16
+    CU08 -.->|incluye| CU16
+    CU09 -.->|incluye| CU17
+    CU09 -.->|incluye| CU16
+    CU05 -.->|extiende| CU04
+    CU10 -.->|extiende| CU09
+    CU14 -.->|extiende| CU11
+
+
+DIAGRAMA 3 - MODELO DE CLASES
+=====================================================================
+
+classDiagram
+    class Persona {
+        <<abstract>>
+        #id : String
+        #nombre : String
+        #apellidoPaterno : String
+        #apellidoMaterno : String
+        #correo : String
+        #telefono : String
+        #contrasenaHash : String
+        #rol : Rol
+        #activo : Boolean
+        +nombreCompleto() String
+        +iniciarSesion(correo, contrasena) Boolean
+        +cerrarSesion() void
+    }
+
+    class Usuario {
+        -matricula : String
+        -carrera : String
+        -cuatrimestre : Integer
+        +reservar(equipoId, fecha, franjaId) Reserva
+        +cancelarReserva(reservaId) Boolean
+        +consultarReservas() List~Reserva~
+        +recibirNotificacion(notificacion) void
+    }
+
+    class Administrador {
+        -numeroEmpleado : String
+        -turno : String
+        +aprobarReserva(reservaId) Boolean
+        +rechazarReserva(reservaId, motivo) Boolean
+        +registrarPrestamo(reservaId, hora) void
+        +registrarDevolucion(reservaId, hora) void
+        +registrarIncidencia(equipoId, descripcion) Incidencia
+        +gestionarEquipo(equipo) void
+        +gestionarHorarioTrabajo(horario) void
+        +consultarHistorial(equipoId) List~Reserva~
+    }
+
+    class HorarioTrabajo {
+        -id : String
+        -dia : DiaSemana
+        -horaEntrada : Time
+        -horaSalida : Time
+        -activo : Boolean
+        +cubre(fecha, hora) Boolean
+        +horasTrabajadas() Integer
+    }
+
+    class Laboratorio {
+        -id : String
+        -nombre : String
+        -ubicacion : String
+        -capacidad : Integer
+        -horaApertura : Time
+        -horaCierre : Time
+        -activo : Boolean
+        +estaAbierto(fecha, hora) Boolean
+        +equiposDisponibles(fecha, franjaId) List~Equipo~
+    }
+
+    class Equipo {
+        -id : String
+        -nombre : String
+        -descripcion : String
+        -tipo : TipoEquipo
+        -marca : String
+        -modelo : String
+        -numeroSerie : String
+        -estado : EstadoEquipo
+        -requiereCapacitacion : Boolean
+        +estaDisponible(fecha, franjaId) Boolean
+        +cambiarEstado(nuevoEstado, motivo) void
+        +historialPrestamos() List~Reserva~
+    }
+
+    class FranjaHoraria {
+        -id : String
+        -horaInicio : Time
+        -horaFin : Time
+        +duracionMinutos() Integer
+        +esValida() Boolean
+        +seSolapaCon(otra) Boolean
+    }
+
+    class Reserva {
+        -id : String
+        -fecha : Date
+        -horaInicio : Time
+        -horaFin : Time
+        -horaPrestamo : Time
+        -horaDevolucion : Time
+        -estado : EstadoReserva
+        -motivoRechazo : String
+        -observaciones : String
+        -fechaCreacion : DateTime
+        -fechaResolucion : DateTime
+        +duracionPrestamo() Integer
+        +estaVigente() Boolean
+        +aprobar(administrador) void
+        +rechazar(administrador, motivo) void
+        +registrarPrestamo(hora) void
+        +registrarDevolucion(hora) void
+        +cancelar() Boolean
+    }
+
+    class Notificacion {
+        -id : String
+        -mensaje : String
+        -tipo : TipoNotificacion
+        -leida : Boolean
+        -fechaEnvio : DateTime
+        +marcarLeida() void
+    }
+
+    class Mantenimiento {
+        -id : String
+        -fechaProgramada : Date
+        -descripcion : String
+        -estado : EstadoMantenimiento
+        -costo : Decimal
+        +cerrar(observaciones) void
+    }
+
+    class Incidencia {
+        -id : String
+        -descripcion : String
+        -gravedad : GravedadIncidencia
+        -fecha : DateTime
+        -resuelta : Boolean
+        +marcarResuelta() void
+    }
+
+    class Rol {
+        <<enumeration>>
+        ESTUDIANTE
+        DOCENTE
+        ADMINISTRADOR
+    }
+
+    class EstadoReserva {
+        <<enumeration>>
+        PENDIENTE
+        APROBADA
+        RECHAZADA
+        CANCELADA
+        EN_USO
+        COMPLETADA
+        DEVUELTA_TARDE
+        CON_INCIDENCIA
+        NO_ASISTIO
+        EXPIRADA
+    }
+
+    class EstadoEquipo {
+        <<enumeration>>
+        DISPONIBLE
+        PRESTADO
+        EN_MANTENIMIENTO
+        FUERA_DE_SERVICIO
+    }
+
+    class TipoEquipo {
+        <<enumeration>>
+        COMPUTO
+        REDES
+        ELECTRONICA
+        IMPRESION_3D
+        LABORATORIO_QUIMICA
+        OTRO
+    }
+
+    class EstadoMantenimiento {
+        <<enumeration>>
+        PROGRAMADO
+        EN_PROCESO
+        FINALIZADO
+    }
+
+    class TipoNotificacion {
+        <<enumeration>>
+        RESERVA_CREADA
+        RESERVA_APROBADA
+        RESERVA_RECHAZADA
+        RECORDATORIO
+        DEVOLUCION_TARDIA
+    }
+
+    class DiaSemana {
+        <<enumeration>>
+        LUNES
+        MARTES
+        MIERCOLES
+        JUEVES
+        VIERNES
+        SABADO
+    }
+
+    class GravedadIncidencia {
+        <<enumeration>>
+        LEVE
+        GRAVE
+        CRITICA
+    }
+
+    Persona <|-- Usuario
+    Persona <|-- Administrador
+
+    Administrador "1" *-- "1..*" HorarioTrabajo : tiene
+    Laboratorio "1" *-- "0..*" Equipo : contiene
+    Equipo "1" *-- "0..*" Mantenimiento : requiere
+
+    Usuario "1" -- "0..*" Reserva : solicita
+    Equipo "1" -- "0..*" Reserva : se presta en
+    Reserva "0..*" -- "1" FranjaHoraria : ocupa
+    Administrador "1" -- "0..*" Reserva : aprueba y entrega
+    Usuario "1" -- "0..*" Notificacion : recibe
+    Reserva "0..1" -- "0..*" Notificacion : origina
+    Equipo "1" -- "0..*" Incidencia : presenta
+    Reserva "0..1" -- "0..*" Incidencia : reporta
+
+    Persona ..> Rol
+    Reserva ..> EstadoReserva
+    Equipo ..> EstadoEquipo
+    Equipo ..> TipoEquipo
+    Notificacion ..> TipoNotificacion
+    Mantenimiento ..> EstadoMantenimiento
+    HorarioTrabajo ..> DiaSemana
+    Incidencia ..> GravedadIncidencia
+
+    note for Reserva "Duración estándar de 60 minutos. La hora de préstamo y la hora de devolución se registran al entregar y al recibir el equipo."
+    note for FranjaHoraria "Cada franja dura exactamente 60 minutos y no se solapa con otra del mismo laboratorio."
+    note for Administrador "Solo puede aprobar, entregar y recibir equipos dentro de su horario de trabajo."
+    note for Equipo "Un equipo prestado, en mantenimiento o fuera de servicio no puede reservarse."
