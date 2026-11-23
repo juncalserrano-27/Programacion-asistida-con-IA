@@ -2,6 +2,8 @@
 
 import builtins
 
+import pytest
+
 import main
 from game import guessing
 
@@ -118,3 +120,21 @@ def test_main_invalid_input_shows_message_and_does_not_consume_attempt(
     assert "1" in out
     assert checked == [50]
     assert len([line for line in out.splitlines() if line.strip()]) >= 2
+
+
+@pytest.mark.parametrize("bad_guess", [0, 101, 200, -5])
+def test_main_out_of_range_input_shows_error_without_consuming_attempt(
+    monkeypatch, capsys, bad_guess: int
+) -> None:
+    seen: list[str] = []
+    monkeypatch.setattr(guessing, "generate_number", lambda: 50)
+    monkeypatch.setattr(guessing, "calculate_score", lambda attempts, won: 100)
+    monkeypatch.setattr(builtins, "input", _fake_input([str(bad_guess), "50"], seen))
+
+    main.main()
+
+    out = capsys.readouterr().out
+    assert len([line for line in out.splitlines() if line.strip()]) >= 2
+    assert "100" in out
+    assert "1" in out
+    assert seen == [str(bad_guess), "50"]
