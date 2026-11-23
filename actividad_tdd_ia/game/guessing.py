@@ -1,9 +1,11 @@
 """Contract for the number guessing game."""
 
+import random
+
 
 def generate_number() -> int:
     """Return a random secret integer between 1 and 100, inclusive."""
-    raise NotImplementedError
+    return random.randint(1, 100)
 
 
 def check_try(guess: int, secret: int) -> str:
@@ -20,7 +22,15 @@ def check_try(guess: int, secret: int) -> str:
     Raises:
         ValueError: If ``guess`` is not an integer between 1 and 100.
     """
-    raise NotImplementedError
+    if not isinstance(guess, int) or not 1 <= guess <= 100:
+        raise ValueError("guess must be an integer between 1 and 100")
+    if not isinstance(secret, int) or not 1 <= secret <= 100:
+        raise ValueError("secret must be an integer between 1 and 100")
+    if guess < secret:
+        return "higher"
+    if guess > secret:
+        return "lower"
+    return "correct"
 
 
 def calculate_score(attempts: int, won: bool) -> int:
@@ -36,4 +46,6 @@ def calculate_score(attempts: int, won: bool) -> int:
     Returns:
         The score as an integer.
     """
-    raise NotImplementedError
+    if not won:
+        return 0
+    return 100 - 15 * (attempts - 1)
