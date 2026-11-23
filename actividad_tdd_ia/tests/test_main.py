@@ -75,7 +75,7 @@ def test_main_losing_game_reveals_the_secret_number(monkeypatch, capsys) -> None
     monkeypatch.setattr(guessing, "check_try", _hint)
     monkeypatch.setattr(guessing, "calculate_score", lambda attempts, won: 0)
     monkeypatch.setattr(
-        builtins, "input", _fake_input(["1", "2", "3", "4", "5", "6", "7"], seen)
+        builtins, "input", _fake_input(["1", "2", "3", "4", "5", "6", "7", "n"], seen)
     )
 
     main.main()
@@ -90,13 +90,13 @@ def test_main_stops_asking_after_seven_attempts(monkeypatch, capsys) -> None:
     monkeypatch.setattr(guessing, "check_try", _hint)
     monkeypatch.setattr(guessing, "calculate_score", lambda attempts, won: 0)
     monkeypatch.setattr(
-        builtins, "input", _fake_input(["1", "2", "3", "4", "5", "6", "7"], seen)
+        builtins, "input", _fake_input(["1", "2", "3", "4", "5", "6", "7", "n"], seen)
     )
 
     main.main()
 
     capsys.readouterr()
-    assert seen == ["1", "2", "3", "4", "5", "6", "7"]
+    assert seen == ["1", "2", "3", "4", "5", "6", "7", "n"]
 
 
 def test_main_invalid_input_shows_message_and_does_not_consume_attempt(
