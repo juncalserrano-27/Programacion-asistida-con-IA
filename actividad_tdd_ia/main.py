@@ -16,7 +16,7 @@ def main() -> None:
     won = False
     while attempts < 7:
         text = input("Guess a number between 1 and 100: ")
-        if not text.isdigit():
+        if not text.isdigit() or not 1 <= int(text) <= 100:
             print("Invalid input: enter an integer between 1 and 100.")
             continue
         guess = int(text)
