@@ -1,6 +1,7 @@
 """Red-phase tests for the main() game loop."""
 
 import builtins
+import re
 
 import pytest
 
@@ -138,3 +139,31 @@ def test_main_out_of_range_input_shows_error_without_consuming_attempt(
     assert "100" in out
     assert "1" in out
     assert seen == [str(bad_guess), "50"]
+
+
+def test_main_continue_after_loss_keeps_hinting_until_win(monkeypatch, capsys) -> None:
+    seen: list[str] = []
+    answers = ["1", "2", "3", "4", "5", "6", "7", "y", "10", "20", "50"]
+    monkeypatch.setattr(guessing, "generate_number", lambda: 50)
+    monkeypatch.setattr(builtins, "input", _fake_input(answers, seen))
+
+    main.main()
+
+    out = capsys.readouterr().out
+    assert seen == answers
+    assert out.count("higher") == 9
+    assert "10" in out
+    assert re.search(r"\b0\b", out) is not None
+
+
+def test_main_decline_continue_ends_game_and_reveals_secret(monkeypatch, capsys) -> None:
+    seen: list[str] = []
+    answers = ["1", "2", "3", "4", "5", "6", "7", "n"]
+    monkeypatch.setattr(guessing, "generate_number", lambda: 50)
+    monkeypatch.setattr(builtins, "input", _fake_input(answers, seen))
+
+    main.main()
+
+    out = capsys.readouterr().out
+    assert seen == answers
+    assert "50" in out
