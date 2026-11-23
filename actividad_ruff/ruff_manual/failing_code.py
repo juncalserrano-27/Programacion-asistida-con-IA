@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-  # noqa: UP009
 """
 Developer: Miguel Jara Maldonado.
 Creation Date: 2026-11-09.
