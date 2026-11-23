@@ -14,7 +14,8 @@ def main() -> None:
     secret = guessing.generate_number()
     attempts = 0
     won = False
-    while attempts < 7:
+    unlimited = False
+    while unlimited or attempts < 7:
         text = input("Guess a number between 1 and 100: ")
         if not text.isdigit() or not 1 <= int(text) <= 100:
             print("Invalid input: enter an integer between 1 and 100.")
@@ -24,8 +25,13 @@ def main() -> None:
         hint = guessing.check_try(guess, secret)
         print(hint)
         if hint == "correct":
-            won = True
+            if not unlimited:
+                won = True
             break
+        if attempts == 7 and not unlimited:
+            if input("Continue? (y/n) ") != "y":
+                break
+            unlimited = True
     score = guessing.calculate_score(attempts, won)
     print(f"Score: {score}, attempts: {attempts}")
     if not won:
