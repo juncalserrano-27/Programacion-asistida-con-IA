@@ -1,0 +1,12 @@
+[project]
+name = "module-04-ai-agents"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp>=4.0.5",
+    "pydantic-ai-slim[openai]>=2.45.0",
+    "pydantic-ai>=2.45.0",
+    "streamlit>=1.64.0",
+]
