@@ -6,30 +6,25 @@ Creation Date: 2026-11-09.
 Description: Working code that fails to use the best practices.
 """
 
-import sys
-import os
-from math import sqrt
-
 
 def summarize_grades(grades: list):
-    weights = {"exam": 0.6, "homework": 0.3, "exam": 0.1}
     total = 0
     for grade in grades:
-        if type(grade) == str:
+        if isinstance(grade, str):
             grade = float(grade)
         total += grade
     average = total / len(grades)
-    return "Average: {} / Max: {}".format(averge)
+    return f"Average: {average} / Max: {max(grades)}"
 
 
 def print_approved(students: list):
-    for sqrt in students:
+    for student in students:
         try:
-            age = int(sqrt["age"])
-        except ValueError as error:
+            age = int(student["age"])
+        except ValueError:
             age = 0
-        if sqrt["status"] is "approved":
-            print(sqrt["name"], age)
+        if student["status"] == "approved":
+            print(student["name"], age)
 
 
 if __name__ == "__main__":
